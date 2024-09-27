@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pakistani Paint</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<style>
+    #canva {
+        border: 2px solid tomato;
+     margin-top: 20px;
+    }
+    .context-menu {cursor: context-menu;}
+    #cont {
+  position: relative;
+  width: 500px;
+  height: 500px;
+}
+
+canvas {
+  border: 1px solid;
+}
+
+#cont canvas, .canvas-container {
+  position: absolute!important;
+  left: 0!important;
+  top: 0!important;
+  width: 100%!important;
+  height: 100%!important;
+}
+
+#cursor {
+  pointer-events: none!important;
+}
+    
+</style>
+
+<body>
+    <input id="mode" type="checkbox" checked><br/>
+    <input id="color" type="color" value="#ff0000"><br/>
+    <input id="size" type="range" min="1" max="100" step="1" value="20"><br/>
+    <input id="opacity" type="number" min="0" max="1" step="0.1" value="0.5"><br/>
+    
+    <div class="container">     
+        <canvas id="canva" width="300px" height="400px">
+        
+        </canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script>
+
+        let c = document.getElementById('canva');
+        let ctx = c.getContext('2d')
+        let color = document.getElementById('color');
+        
+        color.addEventListener('change',()=>{
+            console.log(color.value)
+
+        })
+
+        let isMouseClicked = false
+
+        c.addEventListener('mousedown', (ev) => {
+            console.log(ev)
+            ctx.beginPath();
+            isMouseClicked = true
+        })
+
+        c.addEventListener('mouseup', () => {
+            isMouseClicked = false
+        })
+
+        c.addEventListener('mousemove', (e) => {
+            if (isMouseClicked) {
+                console.log('mouse move event')
+
+                ctx.lineTo(e.offsetX , e.offsetY) 
+                ctx.moveTo(e.offsetX , e.offsetY)
+                ctx.stroke();
+                ctx.lineCap = 'triangle'
+                ctx.lineWidth = 5
+                ctx.strokeStyle = color.value
+                
+            }
+            else {
+                isMouseClicked = false
+            }
+        })
+    var canvas = new fabric.Canvas("draw", {
+	isDrawingMode: true,
+  freeDrawingCursor: 'none'
+});
+
+var cursor = new fabric.StaticCanvas("cursor");
+
+canvas.freeDrawingBrush.width = 20;
+canvas.freeDrawingBrush.color = '#ff0000';
+
+var cursorOpacity = .5;
+var mousecursor = new fabric.Circle({ 
+  left: -100, 
+  top: -100, 
+  radius: canvas.freeDrawingBrush.width / 2, 
+  fill: "rgba(255,0,0," + cursorOpacity + ")", 
+  stroke: "black",
+  originX: 'center', 
+  originY: 'center'
+});
+
+cursor.add(mousecursor);
+
+canvas.on('mouse:move', function (evt) {
+	var mouse = this.getPointer(evt.e);  
+  mousecursor
+  	.set({
+      top: mouse.y,
+      left: mouse.x
+    })
+    .setCoords()
+	  .canvas.renderAll();
+});
+
+canvas.on('mouse:out', function () {
+  // put circle off screen
+  mousecursor
+  	.set({
+      top: mousecursor.originalState.top,
+      left: mousecursor.originalState.left
+    })
+    .setCoords()
+    .canvas.renderAll();
+});
+
+//while brush size is changed
+document.getElementById("size").oninput = function () {
+	var size = this.value;
+  mousecursor
+  	.center()
+  	.set({
+      radius: size/2
+  	})
+    .setCoords()
+    .canvas.renderAll();
+};
+
+//after brush size has been changed
+document.getElementById("size").onchange = function () {
+	var size = parseInt(this.value, 10);
+  canvas.freeDrawingBrush.width = size;
+  mousecursor
+  	.set({
+      left: mousecursor.originalState.left,
+      top: mousecursor.originalState.top,
+      radius: size/2
+  	})
+    .setCoords()
+    .canvas.renderAll();
+};
+
+//change mousecursor opacity
+document.getElementById("opacity").onchange = function () {
+	cursorOpacity = this.value;
+  var fill = mousecursor.fill.split(",");
+  fill[fill.length-1] = cursorOpacity + ")";
+  mousecursor.fill = fill.join(",");
+};
+
+//change drawing color
+document.getElementById("color").onchange = function () {
+	canvas.freeDrawingBrush.color = this.value;  
+  var bigint = parseInt(this.value.replace("#", ""), 16);
+  var r = (bigint >> 16) & 255;
+  var g = (bigint >> 8) & 255;
+  var b = bigint & 255;  
+  mousecursor.fill = "rgba(" + [r,g,b,cursorOpacity].join(",") + ")";
+};
+
+//switch drawing mode
+document.getElementById("mode").onchange = function () {
+	canvas.isDrawingMode = this.checked;
+  
+  if (!this.checked) {
+  	cursor.remove(mousecursor);
+  }
+  else {
+  	canvas.deactivateAll().renderAll();
+  	cursor.add(mousecursor);
+  }
+};
+
+    </script>
+</body>
+
+</html>
